@@ -4,62 +4,51 @@ import com.example.sessionsstore.model.ChargingSession;
 import com.example.sessionsstore.model.SessionsStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
-import sun.reflect.Reflection;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.UUID;
 
 import static com.example.sessionsstore.model.ChargingSession.Status.IN_PROGRESS;
-import static com.example.sessionsstore.model.ChargingSession.Status.STOPPED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.UUID;
-
 public class SessionsStoreApplicationTests {
 
     private SessionsStore sessionsStore;
 
-    private ChargingSession sessionSubmittedCurrentMinute1;
-    private ChargingSession sessionSubmittedCurrentMinute2;
-    private ChargingSession sessionSubmitted1MinutesAgo1;
-
-
     @BeforeEach
-    public void setUp() {
+     void setUp() {
         sessionsStore = new SessionsStore();
-        sessionSubmittedCurrentMinute1 = new ChargingSession(UUID.randomUUID(), "ABC-12345", LocalDateTime.now());
-        sessionSubmittedCurrentMinute2 = new ChargingSession(UUID.randomUUID(), "ABC-12345", LocalDateTime.now());
-        sessionSubmitted1MinutesAgo1 = new ChargingSession(UUID.randomUUID(), "ABC-12345", LocalDateTime.now().minusMinutes(1L));
     }
 
     @Test
-    public void testGivenNoSessionsInStoreUpdatedThisMinute_WhenAddSession_ThenAddSessionToStoreAndToIndex() {
-        sessionsStore.addSession(sessionSubmittedCurrentMinute1, sessionSubmittedCurrentMinute1.getStartedAt());
+     void testGivenNoSessionsInStoreUpdatedThisMinute_WhenAddSession_ThenAddSessionToStoreAndToIndex() {
+        ChargingSession sessionSubmittedCurrentMinute1 = sessionsStore.addSession("ABC-12345", LocalDateTime.now());
         ArrayList<ChargingSession> sessions = sessionsStore.getAllSessions();
         assertEquals(1L, sessions.size());
-        assertEquals(IN_PROGRESS, sessions.get(0).getStatus());
+        assertEquals(IN_PROGRESS, sessionSubmittedCurrentMinute1.getStatus());
     }
 
     @Test
-    public void testGiven1SessionInStoreUpdatedCurrentMinute_WhenAddSession_ThenAddSessionToStoreAndToIndex() {
-        sessionsStore.addSession(sessionSubmittedCurrentMinute1, sessionSubmittedCurrentMinute1.getStartedAt());
-        sessionsStore.addSession(sessionSubmittedCurrentMinute2, sessionSubmittedCurrentMinute2.getStartedAt());
-        ArrayList<ChargingSession> sessions = sessionsStore.getAllSessions();
-        assertEquals(2L, sessions.size());
+     void testGiven1SessionInStoreUpdatedCurrentMinute_WhenAddSession_ThenAddSessionToStoreAndToIndex() {
+        ChargingSession sessionSubmittedCurrentMinute1 = sessionsStore.addSession("ABC-12345", LocalDateTime.now());
+        assertEquals(1L, sessionsStore.getAllSessions().size());
+
+        ChargingSession sessionSubmittedCurrentMinute2 = sessionsStore.addSession("ABC-12345", LocalDateTime.now());
+
+        assertEquals(2L, sessionsStore.getAllSessions().size());
     }
 
     @Test
-    public void testGiven2SessionsInProgressAddedWithIntervalOfTwoMinutes_WhenStopThisSessions_ThenBothOfThemAreStopped() {
-        sessionsStore.addSession(sessionSubmittedCurrentMinute1, sessionSubmittedCurrentMinute1.getStartedAt());
-        sessionsStore.addSession(sessionSubmitted1MinutesAgo1, sessionSubmitted1MinutesAgo1.getStartedAt());
+     void testGiven2SessionsInProgressAddedWithIntervalOfTwoMinutes_WhenStopThisSessions_ThenBothOfThemAreStopped() {
+        ChargingSession sessionSubmittedCurrentMinute1 = sessionsStore.addSession("ABC-12345", LocalDateTime.now());
+        ChargingSession sessionSubmitted1MinutesAgo1 = sessionsStore.addSession("ABC-12345", LocalDateTime.now().minusMinutes(1L));
 
-        sessionsStore.stopSession(sessionSubmittedCurrentMinute1.getId(), LocalDateTime.now());
-        sessionsStore.stopSession(sessionSubmitted1MinutesAgo1.getId(), LocalDateTime.now());
+        sessionsStore.stopSession(sessionSubmittedCurrentMinute1.getId().toString(), LocalDateTime.now());
+        sessionsStore.stopSession(sessionSubmitted1MinutesAgo1.getId().toString(), LocalDateTime.now());
 
         ArrayList<ChargingSession> sessions = sessionsStore.getAllSessions();
         assertEquals(2L, sessions.size());
@@ -68,7 +57,7 @@ public class SessionsStoreApplicationTests {
 
     @Test
     void testGivenNoSessionWithGivenIdInStore_WhenStopThisSession_ThenThrowRuntimeException() {
-        assertThrows(RuntimeException.class, () -> sessionsStore.stopSession(UUID.randomUUID(), LocalDateTime.now()));
+        assertThrows(IllegalArgumentException.class, () -> sessionsStore.stopSession(UUID.randomUUID().toString(), LocalDateTime.now()));
     }
 
     @Test
@@ -78,7 +67,7 @@ public class SessionsStoreApplicationTests {
     }
 
     @Test
-    public void testGivenSeveralSessionsStartedInDifferentTimeAndWithDifferentStatus_WhenGetSessionsUpdatedLastMinute_ThenValidLotsAreReturned() {
+     void testGivenSeveralSessionsStartedInDifferentTimeAndWithDifferentStatus_WhenGetSessionsUpdatedLastMinute_ThenValidLotsAreReturned() {
         LocalDateTime now = LocalDateTime.now();
         ChargingSession inProgressSessionSubmittedCurrentMinute = createInProgressSession(now);
         ChargingSession inProgressSessionSubmitted59SecondsAgo = createInProgressSession(now.minusSeconds(59L));
@@ -118,16 +107,13 @@ public class SessionsStoreApplicationTests {
     }
 
     private ChargingSession createInProgressSession(LocalDateTime time) {
-        ChargingSession session = new ChargingSession(UUID.randomUUID(), "ABC-12345", time, null, IN_PROGRESS);
-        sessionsStore.addSession(session, session.getStartedAt());
-        return session;
+        return sessionsStore.addSession("ABC-12345", time);
     }
 
     private ChargingSession createStoppedSession(LocalDateTime startTime, LocalDateTime stopTime) {
         ChargingSession session = createInProgressSession(startTime);
-        sessionsStore.stopSession(session.getId(), stopTime);
+        sessionsStore.stopSession(session.getId().toString(), stopTime);
         return session;
-
     }
 
 }

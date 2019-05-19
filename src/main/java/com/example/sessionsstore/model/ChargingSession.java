@@ -1,5 +1,6 @@
 package com.example.sessionsstore.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,6 +15,7 @@ public class ChargingSession {
     private UUID id;
     private String stationId;
     private LocalDateTime startedAt;
+    @JsonIgnore
     private LocalDateTime stoppedAt;
     private Status status;
 
@@ -21,10 +23,11 @@ public class ChargingSession {
         IN_PROGRESS, STOPPED
     }
 
-    public ChargingSession(UUID id, String stationId, LocalDateTime startedAt) {
+    ChargingSession(UUID id, String stationId, LocalDateTime startedAt, Status status) {
         this.id = id;
         this.stationId = stationId;
         this.startedAt = startedAt;
+        this.status = status;
     }
 }
 

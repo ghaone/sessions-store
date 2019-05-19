@@ -1,23 +1,28 @@
 package com.example.sessionsstore.model;
 
+import org.springframework.stereotype.Component;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static com.example.sessionsstore.model.ChargingSession.*;
+
+@Component
 public class SessionsStore {
 
     private Map<String, Map<String, ChargingSession>> store = new HashMap<>();
     private Map<String, String> index = new HashMap<>();
 
-    synchronized public void addSession(ChargingSession session, LocalDateTime lastUpdateTime) {
-        session.setStatus(ChargingSession.Status.IN_PROGRESS);
-        addSessionToStoreAndIndex(session, getDateStringWithoutSeconds(lastUpdateTime));
+    synchronized public ChargingSession addSession(String stationId, LocalDateTime startedAt) {
+        ChargingSession session = new ChargingSession(UUID.randomUUID(), stationId, startedAt, Status.IN_PROGRESS);
+        addSessionToStoreAndIndex(session, getDateStringWithoutSeconds(startedAt));
+        return session;
     }
 
     private String getDateStringWithoutSeconds(LocalDateTime localDateTime) {
@@ -30,16 +35,16 @@ public class SessionsStore {
         index.put(session.getId().toString(), lastUpdateTime);
     }
 
-    synchronized public void stopSession(UUID id, LocalDateTime stopTime) {
-        String date = index.get(id.toString());
+    synchronized public void stopSession(String id, LocalDateTime stopTime) {
+        String date = index.get(id);
         Map<String, ChargingSession> sessions = store.get(date);
-        ChargingSession session = sessions.get(id.toString());
+        ChargingSession session = sessions.get(id);
         if (session == null) {
-           throw new RuntimeException("No sessions with such Id");
+           throw new IllegalArgumentException("No sessions with such Id");
         }
-        index.remove(id.toString());
-        sessions.remove(id.toString());
-        session.setStatus(ChargingSession.Status.STOPPED);
+        index.remove(id);
+        sessions.remove(id);
+        session.setStatus(Status.STOPPED);
         session.setStoppedAt(stopTime);
 
         addSessionToStoreAndIndex(session, getDateStringWithoutSeconds(stopTime));
