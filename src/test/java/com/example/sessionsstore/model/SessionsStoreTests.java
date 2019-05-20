@@ -1,10 +1,7 @@
-package com.example.sessionsstore;
+package com.example.sessionsstore.model;
 
-import com.example.sessionsstore.model.ChargingSession;
-import com.example.sessionsstore.model.SessionsStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -15,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class SessionsStoreApplicationTests {
+public class SessionsStoreTests {
 
     private SessionsStore sessionsStore;
 
@@ -43,7 +40,7 @@ public class SessionsStoreApplicationTests {
     }
 
     @Test
-     void testGiven2SessionsInProgressAddedWithIntervalOfTwoMinutes_WhenStopThisSessions_ThenBothOfThemAreStopped() {
+     void testGiven2SessionsInProgressAddedWithIntervalOfTwoMinutes_WhenStopTheseSessions_ThenBothOfThemAreStopped() {
         ChargingSession sessionSubmittedCurrentMinute1 = sessionsStore.addSession("ABC-12345", LocalDateTime.now());
         ChargingSession sessionSubmitted1MinutesAgo1 = sessionsStore.addSession("ABC-12345", LocalDateTime.now().minusMinutes(1L));
 
@@ -56,7 +53,7 @@ public class SessionsStoreApplicationTests {
     }
 
     @Test
-    void testGivenNoSessionWithGivenIdInStore_WhenStopThisSession_ThenThrowRuntimeException() {
+    void testGivenNoSessionWithGivenIdInStore_WhenStopThisSession_ThenThrowIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () -> sessionsStore.stopSession(UUID.randomUUID().toString(), LocalDateTime.now()));
     }
 

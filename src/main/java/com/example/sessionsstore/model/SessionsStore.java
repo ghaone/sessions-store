@@ -36,12 +36,12 @@ public class SessionsStore {
     }
 
     synchronized public void stopSession(String id, LocalDateTime stopTime) {
-        String date = index.get(id);
-        Map<String, ChargingSession> sessions = store.get(date);
-        ChargingSession session = sessions.get(id);
-        if (session == null) {
-           throw new IllegalArgumentException("No sessions with such Id");
+        String dateKey = index.get(id);
+        if (dateKey == null) {
+            throw new IllegalArgumentException("No sessions with such id=" + id);
         }
+        Map<String, ChargingSession> sessions = store.get(dateKey);
+        ChargingSession session = sessions.getOrDefault(id, null);
         index.remove(id);
         sessions.remove(id);
         session.setStatus(Status.STOPPED);

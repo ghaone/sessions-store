@@ -24,11 +24,11 @@ import static com.example.sessionsstore.model.ChargingSession.Status.STOPPED;
 import static java.util.stream.Collectors.counting;
 
 @RestController
-public class SessionsController {
+public class SessionsRestController {
 
     private final SessionsStore sessionsStore;
 
-    public SessionsController(SessionsStore sessionsStore) {
+    public SessionsRestController(SessionsStore sessionsStore) {
         this.sessionsStore = sessionsStore;
     }
 
@@ -39,8 +39,7 @@ public class SessionsController {
         }
         LocalDateTime startedAt;
         try {
-            DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-            startedAt = LocalDateTime.parse(requestBody.getTimestamp(), formatter);
+            startedAt = LocalDateTime.parse(requestBody.getTimestamp(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         } catch (Exception e) {
             return new ResponseEntity<>(new RestError("Cannot parse timestamp"), HttpStatus.BAD_REQUEST);
         }
@@ -53,7 +52,7 @@ public class SessionsController {
     public ResponseEntity stopSession(@PathVariable String id) {
         try {
             sessionsStore.stopSession(id, LocalDateTime.now());
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(new RestError("No sessions found with id=" + id), HttpStatus.NOT_FOUND);
         }
         return ResponseEntity.ok().build();
